@@ -42,7 +42,7 @@ const css = `
 
   /* Header */
   .page-header {
-    width: 100%; max-width: 780px; margin-bottom: 32px;
+    width: 100%; max-width: 1020px; margin-bottom: 32px;
     display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
   }
   .eyebrow {
@@ -73,7 +73,7 @@ const css = `
 
   /* Layout 2 cols */
   .layout {
-    width: 100%; max-width: 780px;
+    width: 100%; max-width: 1020px;
     display: grid;
     grid-template-columns: 1fr 300px;
     gap: 20px;
@@ -149,15 +149,20 @@ const css = `
   .productos-table {
     width: 100%; border-collapse: collapse;
     margin-bottom: 10px;
+    table-layout: fixed;
   }
   .productos-table th {
     font-family: 'DM Mono', monospace; font-size: 0.58rem;
     letter-spacing: 0.1em; text-transform: uppercase;
-    color: var(--muted); padding: 0 8px 8px; text-align: left;
+    color: var(--muted); padding: 0 6px 8px; text-align: left;
     border-bottom: 1px solid var(--border);
+    overflow: hidden;
   }
-  .productos-table th:last-child { text-align: right; width: 40px; }
-  .productos-table td { padding: 6px 6px; vertical-align: middle; }
+  .productos-table th:last-child { text-align: right; }
+  .productos-table td {
+    padding: 6px 4px; vertical-align: middle;
+    overflow: hidden; word-break: break-word;
+  }
   .productos-table tr:not(:last-child) td {
     border-bottom: 1px solid rgba(226,221,212,0.5);
   }
@@ -178,14 +183,132 @@ const css = `
   }
   .productos-table input:focus,
   .productos-table select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(26,58,42,0.08); }
-  .productos-table input.num { text-align: right; font-family: 'DM Mono', monospace; }
+  .productos-table input.num { text-align: center; font-family: 'DM Mono', monospace; font-size: 0.85rem; font-weight: 600; }
+  .productos-table input[type=number] { -moz-appearance: textfield; }
+  .productos-table input[type=number]::-webkit-inner-spin-button,
+  .productos-table input[type=number]::-webkit-outer-spin-button { opacity: 1; width: 18px; cursor: pointer; }
   .productos-table input::placeholder { color: var(--border2); }
 
-  .col-desc  { width: 46%; }
-  .col-cant  { width: 9%; min-width: 60px; }
-  .col-price { width: 20%; }
-  .col-sub   { width: 19%; }
+  /* Anchos fijos — la tabla NO se mueve al cambiar de producto */
+  .col-desc  { width: 36%; }
+  .col-cant  { width: 11%; }
+  .col-price { width: 13%; }
+  .col-sub   { width: 15%; }
+  .col-stock { width: 19%; }
   .col-del   { width: 6%; }
+
+  /* ── Stock badge ── */
+  .stock-cell {
+    display: flex; flex-direction: column; gap: 3px; padding: 2px 6px;
+  }
+  .stock-numbers {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 4px;
+  }
+  .stock-original {
+    font-family: 'DM Mono', monospace; font-size: 0.68rem;
+    color: var(--muted); text-decoration: line-through;
+  }
+  .stock-arrow { font-size: 0.6rem; color: var(--muted); }
+  .stock-final {
+    font-family: 'DM Mono', monospace; font-size: 0.78rem; font-weight: 700;
+    transition: color 0.3s;
+  }
+  .stock-final.ok      { color: var(--accent2); }
+  .stock-final.warning { color: var(--gold); }
+  .stock-final.danger  { color: var(--red); }
+  .stock-bar-track {
+    height: 4px; border-radius: 999px;
+    background: var(--border); overflow: hidden;
+  }
+  .stock-bar-fill {
+    height: 100%; border-radius: 999px;
+    transition: width 0.3s ease, background 0.3s ease;
+  }
+  .stock-bar-fill.ok      { background: var(--accent2); }
+  .stock-bar-fill.warning { background: var(--gold); }
+  .stock-bar-fill.danger  { background: var(--red); }
+  .stock-label {
+    font-size: 0.6rem; color: var(--muted);
+    font-family: 'DM Mono', monospace; text-align: right;
+    white-space: nowrap;
+  }
+  .stock-exceeded {
+    font-size: 0.6rem; color: var(--red);
+    font-family: 'DM Mono', monospace; font-weight: 600;
+    animation: blink 0.8s ease infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .stock-empty {
+    font-size: 0.7rem; color: var(--border2);
+    font-family: 'DM Mono', monospace; padding: 0 6px;
+  }
+
+  /* ── Custom product selector ── */
+  .prod-select-wrap {
+    position: relative; width: 90%;
+  }
+  .prod-select-native {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    opacity: 0; cursor: pointer; z-index: 2;
+  }
+  .prod-selected {
+    display: flex; flex-direction: column; gap: 1px;
+    padding: 5px 22px 5px 8px;
+    border: 1.5px solid var(--border); border-radius: 7px;
+    background: var(--bg); min-height: 34px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    pointer-events: none;
+  }
+  .prod-select-wrap:focus-within .prod-selected {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(26,58,42,0.08);
+  }
+  .prod-selected-name {
+    font-size: 0.82rem; color: var(--text); font-weight: 500;
+    white-space: normal; overflow: hidden;
+    word-break: break-word;
+    line-height: 1.25;
+  }
+  .prod-selected-meta {
+    font-size: 0.62rem; color: var(--muted);
+    font-family: 'DM Mono', monospace; text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .prod-placeholder {
+    padding: 8px 28px 8px 10px;
+    border: 1.5px solid var(--border); border-radius: 7px;
+    background: var(--bg); font-size: 0.82rem;
+    color: var(--border2); pointer-events: none;
+    min-height: 36px; display: flex; align-items: center;
+  }
+  .prod-chevron {
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+    font-size: 0.7rem; color: var(--muted); pointer-events: none; z-index: 1;
+  }
+  .prod-select-native option:disabled {
+    color: #bbb; font-style: italic;
+  }
+
+  /* ── Precio solo lectura ── */
+  .price-readonly {
+    display: flex; align-items: center; justify-content: center; gap: 2px;
+    padding: 5px 6px; border-radius: 7px; min-height: 34px;
+    background: rgba(226,221,212,0.25);
+    border: 1.5px solid transparent;
+    white-space: nowrap; overflow: hidden;
+  }
+  .price-currency {
+    font-family: 'DM Mono', monospace; font-size: 0.62rem;
+    color: var(--muted); font-weight: 500; flex-shrink: 0;
+  }
+  .price-val {
+    font-family: 'DM Mono', monospace; font-size: 0.84rem;
+    color: var(--text); font-weight: 700; flex-shrink: 0;
+  }
+  .price-empty {
+    font-family: 'DM Mono', monospace; font-size: 0.8rem; color: var(--border2);
+  }
 
   .subtotal-cell {
     font-family: 'DM Mono', monospace; font-size: 0.8rem;
@@ -403,7 +526,7 @@ const mockAPI = {
 };
 
 // ─── Componente ──────────────────────────────────────────────────────────────
-export default function TransaccionPanel({ empresa: empresaProp, onTransaccionCreada }) {
+export default function TransaccionPanel({ empresa: empresaProp, onTransaccionCreada, onVolver }) {
 
   // Empresa mock si no viene por prop (para pruebas en standalone)
   const empresa = empresaProp ?? {
@@ -488,6 +611,11 @@ export default function TransaccionPanel({ empresa: empresaProp, onTransaccionCr
       (!i.producto_id && !i.descripcion.trim()) || !i.cantidad || !i.precio_unitario
     );
     if (itemsErr) e.items = "Selecciona un producto y completa cantidad en cada fila";
+    const stockErr = items.some(i => {
+      const prod = catalogoProductos.find(p => p.id === i.producto_id);
+      return prod && (parseInt(i.cantidad) || 0) > (prod.stock ?? 0);
+    });
+    if (stockErr) e.items = "Una o más filas exceden el stock disponible";
     return e;
   };
 
@@ -660,8 +788,9 @@ export default function TransaccionPanel({ empresa: empresaProp, onTransaccionCr
                       <tr>
                         <th className="col-desc">Descripción</th>
                         <th className="col-cant">Cant.</th>
-                        <th className="col-price">P. Unitario</th>
+                        <th className="col-price">Precio</th>
                         <th className="col-sub">Subtotal</th>
+                        <th className="col-stock">Stock restante</th>
                         <th className="col-del"></th>
                       </tr>
                     </thead>
@@ -672,18 +801,38 @@ export default function TransaccionPanel({ empresa: empresaProp, onTransaccionCr
                         <tr key={item.id}>
                           <td className="col-desc">
                             {catalogoProductos.length > 0 ? (
-                              <select
-                                value={item.producto_id}
-                                onChange={e => seleccionarProducto(item.id, e.target.value)}
-                                style={{width:"100%",padding:"6px 8px",border:"1.5px solid var(--border)",borderRadius:"6px",background:"var(--bg)",fontFamily:"DM Sans,sans-serif",fontSize:"0.82rem",color:"var(--text)",outline:"none"}}
-                              >
-                                <option value="">Selecciona producto…</option>
-                                {catalogoProductos.map(p => (
-                                  <option key={p.id} value={p.id}>
-                                    {p.nombre} ({p.unidadMedida}) — S/ {p.precioUnitario}
-                                  </option>
-                                ))}
-                              </select>
+                              <div className="prod-select-wrap">
+                                <select
+                                  value={item.producto_id}
+                                  onChange={e => seleccionarProducto(item.id, e.target.value)}
+                                  className="prod-select-native"
+                                >
+                                  <option value="">Selecciona producto…</option>
+                                  {catalogoProductos.map(p => {
+                                    const usadoEnOtraFila = items.some(
+                                      other => other.id !== item.id && other.producto_id === p.id
+                                    );
+                                    return (
+                                      <option key={p.id} value={p.id} disabled={usadoEnOtraFila}>
+                                        {usadoEnOtraFila ? `✓ ${p.nombre} (ya agregado)` : p.nombre}
+                                      </option>
+                                    );
+                                  })}
+                                </select>
+                                {item.producto_id ? (
+                                  <div className="prod-selected">
+                                    <span className="prod-selected-name">
+                                      {catalogoProductos.find(p => p.id === item.producto_id)?.nombre}
+                                    </span>
+                                    <span className="prod-selected-meta">
+                                      {catalogoProductos.find(p => p.id === item.producto_id)?.unidadMedida}
+                                    </span>
+                                  </div>
+                                ) : (
+                                  <div className="prod-placeholder">Selecciona producto…</div>
+                                )}
+                                <span className="prod-chevron">▾</span>
+                              </div>
                             ) : (
                               <input
                                 type="text"
@@ -700,21 +849,55 @@ export default function TransaccionPanel({ empresa: empresaProp, onTransaccionCr
                               className="num"
                               value={item.cantidad}
                               onChange={e => updateItem(item.id, "cantidad", e.target.value)}
+                              style={{paddingLeft:4, paddingRight:4, textAlign:"center"}}
                             />
                           </td>
                           <td className="col-price">
-                            <input
-                              type="number" min="0" step="0.01"
-                              placeholder="0.00"
-                              className="num"
-                              value={item.precio_unitario}
-                              onChange={e => updateItem(item.id, "precio_unitario", e.target.value)}
-                            />
+                            <div className="price-readonly">
+                              {item.precio_unitario
+                                ? <><span className="price-currency">S/</span><span className="price-val">{parseFloat(item.precio_unitario).toFixed(2)}</span></>
+                                : <span className="price-empty">—</span>
+                              }
+                            </div>
                           </td>
                           <td className="col-sub">
                             <div className="subtotal-cell">
                               {subtotal(item) > 0 ? fmt(subtotal(item)) : "—"}
                             </div>
+                          </td>
+                          <td className="col-stock">
+                            {(() => {
+                              const prod = catalogoProductos.find(p => p.id === item.producto_id);
+                              if (!prod) return <span className="stock-empty">—</span>;
+                              const stockOrig = prod.stock ?? 0;
+                              const cant = parseInt(item.cantidad) || 0;
+                              const restante = stockOrig - cant;
+                              const pct = Math.max(0, Math.min(100, (restante / stockOrig) * 100));
+                              const nivel = restante < 0 ? "danger" : pct <= 20 ? "danger" : pct <= 40 ? "warning" : "ok";
+                              return (
+                                <div className="stock-cell">
+                                  <div className="stock-numbers">
+                                    {cant > 0 && (
+                                      <span className="stock-original">{stockOrig}</span>
+                                    )}
+                                    {cant > 0 && <span className="stock-arrow">→</span>}
+                                    <span className={`stock-final ${nivel}`}>
+                                      {restante < 0 ? "−" + Math.abs(restante) : restante}
+                                    </span>
+                                  </div>
+                                  <div className="stock-bar-track">
+                                    <div
+                                      className={`stock-bar-fill ${nivel}`}
+                                      style={{width: restante < 0 ? "100%" : `${pct}%`}}
+                                    />
+                                  </div>
+                                  {restante < 0
+                                    ? <span className="stock-exceeded">⚠ Excede stock</span>
+                                    : <span className="stock-label">de {stockOrig} disp.</span>
+                                  }
+                                </div>
+                              );
+                            })()}
                           </td>
                           <td className="col-del">
                             <button className="btn-del" onClick={() => removeItem(item.id)} title="Eliminar">✕</button>
@@ -729,7 +912,7 @@ export default function TransaccionPanel({ empresa: empresaProp, onTransaccionCr
                   </button>
 
                   <div className="form-actions">
-                    <button className="btn btn-ghost">← Volver</button>
+                    <button className="btn btn-ghost" onClick={onVolver}>← Volver</button>
                     <button className="btn btn-primary" onClick={handleGuardar} disabled={saving || monto_total <= 0}>
                       {saving
                         ? <><span className="spinner"/>Guardando…</>

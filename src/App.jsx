@@ -170,6 +170,7 @@ export default function App() {
   const [empresa, setEmpresa]       = useState(null);
   const [transaccion, setTrans]     = useState(null);
   const [pageKey, setPageKey]       = useState(0); // para re-animar
+  const [empresaStep, setEmpresaStep] = useState(1); // step interno del EmpresaPanel
 
   // Pasos alcanzados
   const stepsReached = {
@@ -188,6 +189,7 @@ export default function App() {
   const handleReset = () => {
     setEmpresa(null);
     setTrans(null);
+    setEmpresaStep(1);
     setStep("empresa");
     setPageKey(k => k + 1);
   };
@@ -197,8 +199,15 @@ export default function App() {
   // ── Callbacks de cada panel ──────────────────────────────────────────────
   const onEmpresaSeleccionada = (emp) => {
     setEmpresa(emp);
+    setEmpresaStep(2); // quedó en "Empresa encontrada"
     setStep("transaccion");
     setPageKey(k => k + 1);
+  };
+
+  const onVolverAEmpresa = () => {
+    setStep("empresa");
+    setPageKey(k => k + 1);
+    // empresaStep ya tiene 2, así EmpresaPanel abre directo en "Empresa encontrada"
   };
 
   const onTransaccionCreada = (trx) => {
@@ -283,6 +292,9 @@ export default function App() {
         {step === "empresa" && (
           <EmpresaPanel
             onEmpresaSeleccionada={onEmpresaSeleccionada}
+            initialStep={empresaStep}
+            onStepChange={setEmpresaStep}
+            initialEmpresa={empresaStep === 2 ? empresa : null}
           />
         )}
 
@@ -290,6 +302,7 @@ export default function App() {
           <TransaccionPanel
             empresa={empresa}
             onTransaccionCreada={onTransaccionCreada}
+            onVolver={onVolverAEmpresa}
           />
         )}
 

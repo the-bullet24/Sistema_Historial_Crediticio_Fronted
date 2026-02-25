@@ -575,14 +575,14 @@ const RUBROS = [
 ];
 
 // ─── Componente principal ────────────────────────────────────────────────────
-export default function EmpresaPanel({ onEmpresaSeleccionada }) {
-  const [step, setStep] = useState(1); // 1: buscar, 2: resultado, 3: éxito
+export default function EmpresaPanel({ onEmpresaSeleccionada, initialStep = 1, onStepChange, initialEmpresa = null }) {
+  const [step, setStep] = useState(initialStep); // 1: buscar, 2: resultado, 3: éxito
   const [ruc, setRuc] = useState("");
   const [searching, setSearching] = useState(false);
   const [searchResult, setSearchResult] = useState(null); // null | {found, data}
   const [searchError, setSearchError] = useState("");
-  const [mode, setMode] = useState(null); // "found" | "new"
-  const [empresaSeleccionada, setEmpresaSeleccionada] = useState(null);
+  const [mode, setMode] = useState(initialEmpresa ? "found" : null); // "found" | "new"
+  const [empresaSeleccionada, setEmpresaSeleccionada] = useState(initialEmpresa);
   const [saving, setSaving] = useState(false);
   const [savedId, setSavedId] = useState(null);
 
@@ -618,7 +618,7 @@ export default function EmpresaPanel({ onEmpresaSeleccionada }) {
         setMode("new");
         setForm(f => ({ ...f, ruc }));
       }
-      setStep(2);
+      goStep(2);
     } catch {
       setSearchResult({ error: true });
     } finally {
@@ -628,7 +628,7 @@ export default function EmpresaPanel({ onEmpresaSeleccionada }) {
 
   // ── Seleccionar empresa encontrada
   const handleUsarEmpresa = () => {
-    setStep(3);
+    goStep(3);
     onEmpresaSeleccionada?.(empresaSeleccionada);
   };
 
@@ -654,7 +654,7 @@ export default function EmpresaPanel({ onEmpresaSeleccionada }) {
       setSavedId(res.id);
       const nuevaEmpresa = { ...form, id: res.id };
       setEmpresaSeleccionada(nuevaEmpresa);
-      setStep(3);
+      goStep(3);
       onEmpresaSeleccionada?.(nuevaEmpresa);
     } catch {
       setErrors({ _global: "Error al guardar. Intenta nuevamente." });
@@ -663,10 +663,12 @@ export default function EmpresaPanel({ onEmpresaSeleccionada }) {
     }
   };
 
+  const goStep = (n) => { setStep(n); if (onStepChange) onStepChange(n); };
+
   const handleReset = () => {
-    setStep(1); setRuc(""); setSearchResult(null);
+    goStep(1); setSearchResult(null);
     setMode(null); setEmpresaSeleccionada(null);
-    setSavedId(null);
+    setSavedId(null); setSearchError("");
     setForm({ ruc:"",razon_social:"",direccion:"",rubro:"",correo_contacto:"",telefono:"",estado:"activo" });
     setErrors({});
   };
@@ -737,7 +739,7 @@ export default function EmpresaPanel({ onEmpresaSeleccionada }) {
 
               <div className="divider">o</div>
               <div style={{display:"flex",justifyContent:"center"}}>
-                <button className="btn btn-ghost btn-sm" onClick={() => { setMode("new"); setStep(2); }}>
+                <button className="btn btn-ghost btn-sm" onClick={() => { setMode("new"); goStep(2); }}>
                   + Registrar empresa nueva sin buscar
                 </button>
               </div>
