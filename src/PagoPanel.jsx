@@ -390,13 +390,7 @@ const diasHastaVenc = (fechaVenc) => {
 const METODOS = ["Efectivo","Transferencia bancaria","Depósito","Cheque","Yape","Plin","Otro"];
 const BANCOS  = ["BCP","BBVA","Interbank","Scotiabank","BanBif","Banco de la Nación","Otro"];
 
-// ─── Mock API ────────────────────────────────────────────────────────────────
-const mockAPI = {
-  registrarPago: async (data) => {
-    await new Promise(r => setTimeout(r, 1000));
-    return { success: true, id: Math.floor(Math.random() * 9000) + 1000 };
-  }
-};
+const BASE_URL = "http://localhost:8080/api";
 
 // ─── Datos mock de transacción (reemplaza con prop real) ──────────────────────
 const MOCK_TRANSACCION = {
@@ -488,35 +482,41 @@ export default function PagoPanel({ transaccion: trxProp, empresa: empresaProp, 
     return e;
   };
 
-  // ── Guardar
+  // ── Guardar — conectado al backend real
   const handleGuardar = async () => {
     const e = validate();
     if (Object.keys(e).length) { setErrors(e); return; }
     setErrors({}); setGlobalErr(""); setSaving(true);
 
+    // Java espera camelCase
     const payload = {
-      transaccion_id:            trx.id,
-      fecha_pago:                form.fecha_pago,
-      monto:                     parseFloat(form.monto),
-      metodo_pago:               form.metodo_pago,
-      banco:                     form.banco || null,
-      numero_operacion:          form.numero_operacion || null,
-      comprobante_url:           form.comprobante_url || null,
-      tipo_pago:                 tipoPago,
-      dias_respecto_vencimiento: (() => {
-        const diff = new Date(trx.fecha_vencimiento + "T00:00:00") - new Date(form.fecha_pago + "T00:00:00");
-        return -Math.round(diff / (1000 * 60 * 60 * 24)); // negativo=anticipado
-      })(),
-      // impacto_score lo calcula el backend
+      transaccion:     { id: trx.id },
+      fechaPago:       form.fecha_pago,
+      monto:           parseFloat(form.monto),
+      metodoPago:      form.metodo_pago,
+      banco:           form.banco || null,
+      numeroOperacion: form.numero_operacion || null,
+      comprobanteUrl:  form.comprobante_url || null,
     };
 
     try {
-      const res = await mockAPI.registrarPago(payload);
-      setSavedData({ ...payload, id: res.id });
+      const res = await fetch(`${BASE_URL}/pagos`, {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Error al registrar el pago");
+      }
+
+      const saved = await res.json();
+      setSavedData({ ...form, id: saved.id, tipoPago });
       setStep(2);
-      onPagoRegistrado?.({ ...payload, id: res.id });
-    } catch {
-      setGlobalErr("Error al registrar el pago. Intenta nuevamente.");
+      onPagoRegistrado?.(saved);
+    } catch (err) {
+      setGlobalErr(err.message || "Error al registrar el pago. Intenta nuevamente.");
     } finally {
       setSaving(false);
     }

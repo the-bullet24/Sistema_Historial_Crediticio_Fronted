@@ -3,6 +3,7 @@ import EmpresaPanel from "./EmpresaPanel";
 import TransaccionPanel from "./TransaccionPanel";
 import PagoPanel from "./PagoPanel";
 import HistorialScorePanel from "./HistorialScorePanel";
+import TransaccionDetallePanel from "./TransaccionDetallePanel";
 
 // ─── Estilos globales de navegación ─────────────────────────────────────────
 const css = `
@@ -161,6 +162,7 @@ const STEPS = [
   { key: "empresa",     label: "Empresa",     icon: "🏢", sub: "Buscar o registrar" },
   { key: "transaccion", label: "Transacción",  icon: "💳", sub: "Crear venta a crédito" },
   { key: "pago",        label: "Pago",         icon: "💰", sub: "Registrar abono" },
+  { key: "detalle",     label: "Detalle",      icon: "📋", sub: "Timeline y ajustes" },
   { key: "historial",   label: "Score",        icon: "📈", sub: "Ver historial" },
 ];
 
@@ -177,6 +179,7 @@ export default function App() {
     empresa:     true,
     transaccion: !!empresa,
     pago:        !!empresa && !!transaccion,
+    detalle:     !!empresa && !!transaccion,
     historial:   !!empresa,
   };
 
@@ -211,12 +214,34 @@ export default function App() {
   };
 
   const onTransaccionCreada = (trx) => {
-    setTrans(trx);
+    // Normalizar camelCase (Java) → snake_case (frontend)
+    const trxNormalizada = {
+      id:                 trx.id,
+      codigo_transaccion: trx.codigoTransaccion,
+      monto_total:        trx.montoTotal,
+      monto_pagado:       0,
+      fecha_venta:        trx.fechaVenta,
+      fecha_vencimiento:  trx.fechaVencimiento,
+      estado_pago:        trx.estadoPago,
+      empresa_id:         trx.empresa?.id,
+    };
+    setTrans(trxNormalizada);
     setStep("pago");
     setPageKey(k => k + 1);
   };
 
   const onPagoRegistrado = () => {
+    // Después del pago ir a detalle (timeline + ajustes + PDFs)
+    setStep("detalle");
+    setPageKey(k => k + 1);
+  };
+
+  const onVolverAPago = () => {
+    setStep("pago");
+    setPageKey(k => k + 1);
+  };
+
+  const onIrAHistorial = () => {
     setStep("historial");
     setPageKey(k => k + 1);
   };
@@ -311,6 +336,15 @@ export default function App() {
             empresa={empresa}
             transaccion={transaccion}
             onPagoRegistrado={onPagoRegistrado}
+          />
+        )}
+
+        {step === "detalle" && empresa && transaccion && (
+          <TransaccionDetallePanel
+            empresa={empresa}
+            transaccion={transaccion}
+            onVolver={onVolverAPago}
+            onIrAHistorial={onIrAHistorial}
           />
         )}
 
